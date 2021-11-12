@@ -1,3 +1,4 @@
+//go:build unittest
 // +build unittest
 
 package server
@@ -109,7 +110,7 @@ func setupPublicHTTPServer(t *testing.T) (*PublicServer, string) {
 	}
 
 	// s.Run is never called, binding can be to any port
-	s, err := NewPublicServer("localhost:12345", "", d, chain, mempool, txCache, "", metrics, is, false)
+	s, err := NewPublicServer("localhost:12345", "", d, chain, mempool, txCache, "", metrics, is, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -406,6 +407,20 @@ func httpTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 			},
 		},
 		{
+			name:        "explorerSearch taproot descriptor",
+			r:           newGetRequest(ts.URL + "/search?q=" + url.QueryEscape(dbtestdata.TaprootDescriptor)),
+			status:      http.StatusOK,
+			contentType: "text/html; charset=utf-8",
+			body: []string{
+				`<a class="navbar-brand" href="/">Fake Coin Explorer</a>`,
+				`<h1>XPUB <small class="text-muted">0 FAKE</small></h1><div class="alert alert-data ellipsis"><span class="data">tr([5c9e228d/86&#39;/1&#39;/0&#39;]tpubDC88gkaZi5HvJGxGDNLADkvtdpni3mLmx6vr2KnXmWMG8zfkBRggsxHVBkUpgcwPe2KKpkyvTJCdXHb1UHEWE64vczyyPQfHr1skBcsRedN/{0,1}/*)#4rqwxvej</span></div><h3>Confirmed</h3>`,
+				`<tr><td style="width: 25%;">Total Received</td><td class="data">0 FAKE</td></tr>`,
+				`<tr><td>Total Sent</td><td class="data">0 FAKE</td></tr>`,
+				`<tr><td>Used XPUB Addresses</td><td class="data">0</td></tr>`,
+				`</html>`,
+			},
+		},
+		{
 			name:        "explorerSearch not found",
 			r:           newGetRequest(ts.URL + "/search?q=1234"),
 			status:      http.StatusOK,
@@ -696,6 +711,15 @@ func httpTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 			contentType: "application/json; charset=utf-8",
 			body: []string{
 				`{"page":1,"totalPages":1,"itemsOnPage":1000,"address":"upub5E1xjDmZ7Hhej6LPpS8duATdKXnRYui7bDYj6ehfFGzWDZtmCmQkZhc3Zb7kgRLtHWd16QFxyP86JKL3ShZEBFX88aciJ3xyocuyhZZ8g6q","balance":"118641975500","totalReceived":"118641975501","totalSent":"1","unconfirmedBalance":"0","unconfirmedTxs":0,"txs":2,"txids":["3d90d15ed026dc45e19ffb52875ed18fa9e8012ad123d7f7212176e2b0ebdb71","effd9ef509383d536b1c8af5bf434c8efbf521a4f2befd4022bbd68694b4ac75"],"usedTokens":2,"tokens":[{"type":"XPUBAddress","name":"2MzmAKayJmja784jyHvRUW1bXPget1csRRG","path":"m/49'/1'/33'/0/0","transfers":2,"decimals":8,"balance":"0","totalReceived":"1","totalSent":"1"},{"type":"XPUBAddress","name":"2MsYfbi6ZdVXLDNrYAQ11ja9Sd3otMk4Pmj","path":"m/49'/1'/33'/0/1","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2MuAZNAjLSo6RLFad2fvHSfgqBD7BoEVy4T","path":"m/49'/1'/33'/0/2","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NEqKzw3BosGnBE9by5uaDy5QgwjHac4Zbg","path":"m/49'/1'/33'/0/3","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2Mw7vJNC8zUK6VNN4CEjtoTYmuNPLewxZzV","path":"m/49'/1'/33'/0/4","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N1kvo97NFASPXiwephZUxE9PRXunjTxEc4","path":"m/49'/1'/33'/0/5","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2MuWrWMzoBt8VDFNvPmpJf42M1GTUs85fPx","path":"m/49'/1'/33'/0/6","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2MuVZ2Ca6Da9zmYynt49Rx7uikAgubGcymF","path":"m/49'/1'/33'/0/7","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2MzRGWDUmrPP9HwYu4B43QGCTLwoop5cExa","path":"m/49'/1'/33'/0/8","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N5C9EEWJzyBXhpyPHqa3UNed73Amsi5b3L","path":"m/49'/1'/33'/0/9","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2MzNawz2zjwq1L85GDE3YydEJGJYfXxaWkk","path":"m/49'/1'/33'/0/10","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N7NdeuAMgL57WE7QCeV2gTWi2Um8iAu5dA","path":"m/49'/1'/33'/0/11","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N8JQEP6DSHEZHNsSDPA1gHMUq9YFndhkfV","path":"m/49'/1'/33'/0/12","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2Mvbn3YXqKZVpQKugaoQrfjSYPvz76RwZkC","path":"m/49'/1'/33'/0/13","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N8MRNxCfwUY9TSW27X9ooGYtqgrGCfLRHx","path":"m/49'/1'/33'/0/14","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N6HvwrHC113KYZAmCtJ9XJNWgaTcnFunCM","path":"m/49'/1'/33'/0/15","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NEo3oNyHUoi7rmRWee7wki37jxPWsWCopJ","path":"m/49'/1'/33'/0/16","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2Mzm5KY8qdFbDHsQfy4akXbFvbR3FAwDuVo","path":"m/49'/1'/33'/0/17","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NGMwftmQCogp6XZNGvgiybz3WZysvsJzqC","path":"m/49'/1'/33'/0/18","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N3fJrrefndYjLGycvFFfYgevpZtcRKCkRD","path":"m/49'/1'/33'/0/19","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N1T7TnHBwfdpBoyw53EGUL7vuJmb2mU6jF","path":"m/49'/1'/33'/0/20","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2MzSBtRWHbBjeUcu3H5VRDqkvz5sfmDxJKo","path":"m/49'/1'/33'/1/0","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2MtShtAJYb1afWduUTwF1SixJjan7urZKke","path":"m/49'/1'/33'/1/1","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N3cP668SeqyBEr9gnB4yQEmU3VyxeRYith","path":"m/49'/1'/33'/1/2","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N6utyMZfPNUb1Bk8oz7p2JqJrXkq83gegu","path":"m/49'/1'/33'/1/3","transfers":1,"decimals":8,"balance":"118641975500","totalReceived":"118641975500","totalSent":"0"},{"type":"XPUBAddress","name":"2NEzatauNhf9kPTwwj6ZfYKjUdy52j4hVUL","path":"m/49'/1'/33'/1/4","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N4RjsDp4LBpkNqyF91aNjgpF9CwDwBkJZq","path":"m/49'/1'/33'/1/5","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N8XygTmQc4NoBBPEy3yybnfCYhsxFtzPDY","path":"m/49'/1'/33'/1/6","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N5BjBomZvb48sccK2vwLMiQ5ETKp1fdPVn","path":"m/49'/1'/33'/1/7","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2MybMwbZRPCGU3SMWPwQCpDkbcQFw5Hbwen","path":"m/49'/1'/33'/1/8","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N7HexL4dyAQc7Th4iqcCW4hZuyiZsLWf74","path":"m/49'/1'/33'/1/9","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NF6X5FDGWrQj4nQrfP6hA77zB5WAc1DGup","path":"m/49'/1'/33'/1/10","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N4ZRPdvc7BVioBTohy4F6QtxreqcjNj26b","path":"m/49'/1'/33'/1/11","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2Mtfho1rLmevh4qTnkYWxZEFCWteDMtTcUF","path":"m/49'/1'/33'/1/12","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NFUCphKYvmMcNZRZrF261mRX6iADVB9Qms","path":"m/49'/1'/33'/1/13","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N5kBNMB8qgxE4Y4f8J19fScsE49J4aNvoJ","path":"m/49'/1'/33'/1/14","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NANWCaefhCKdXMcW8NbZnnrFRDvhJN2wPy","path":"m/49'/1'/33'/1/15","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NFHw7Yo2Bz8D2wGAYHW9qidbZFLpfJ72qB","path":"m/49'/1'/33'/1/16","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NBDSsBgy5PpFniLCb1eAFHcSxgxwPSDsZa","path":"m/49'/1'/33'/1/17","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NDWCSQHogc7sCuc2WoYt9PX2i2i6a5k6dX","path":"m/49'/1'/33'/1/18","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N8vNyDP7iSDjm3BKpXrbDjAxyphqfvnJz8","path":"m/49'/1'/33'/1/19","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2N4tFKLurSbMusAyq1tv4tzymVjveAFV1Vb","path":"m/49'/1'/33'/1/20","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NBx5WwjAr2cH6Yqrp3Vsf957HtRKwDUVdX","path":"m/49'/1'/33'/1/21","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NBu1seHTaFhQxbcW5L5BkZzqFLGmZqpxsa","path":"m/49'/1'/33'/1/22","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"2NCDLoea22jGsXuarfT1n2QyCUh6RFhAPnT","path":"m/49'/1'/33'/1/23","transfers":0,"decimals":8}]}`,
+			},
+		},
+		{
+			name:        "apiXpub v2 taproot descriptor tokens=derived",
+			r:           newGetRequest(ts.URL + "/api/v2/xpub/" + url.QueryEscape(dbtestdata.TaprootDescriptor) + "?tokens=derived&gap=2"),
+			status:      http.StatusOK,
+			contentType: "application/json; charset=utf-8",
+			body: []string{
+				`{"page":1,"totalPages":1,"itemsOnPage":1000,"address":"tr([5c9e228d/86'/1'/0']tpubDC88gkaZi5HvJGxGDNLADkvtdpni3mLmx6vr2KnXmWMG8zfkBRggsxHVBkUpgcwPe2KKpkyvTJCdXHb1UHEWE64vczyyPQfHr1skBcsRedN/{0,1}/*)#4rqwxvej","balance":"0","totalReceived":"0","totalSent":"0","unconfirmedBalance":"0","unconfirmedTxs":0,"txs":0,"tokens":[{"type":"XPUBAddress","name":"tb1pswrqtykue8r89t9u4rprjs0gt4qzkdfuursfnvqaa3f2yql07zmq8s8a5u","path":"m/86'/1'/0'/0/0","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"tb1p8tvmvsvhsee73rhym86wt435qrqm92psfsyhy6a3n5gw455znnpqm8wald","path":"m/86'/1'/0'/0/1","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"tb1p537ddhyuydg5c2v75xxmn6ac64yz4xns2x0gpdcwj5vzzzgrywlqlqwk43","path":"m/86'/1'/0'/0/2","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"tb1pn2d0yjeedavnkd8z8lhm566p0f2utm3lgvxrsdehnl94y34txmts5s7t4c","path":"m/86'/1'/0'/1/0","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"tb1p0pnd6ue5vryymvd28aeq3kdz6rmsdjqrq6eespgtg8wdgnxjzjksujhq4u","path":"m/86'/1'/0'/1/1","transfers":0,"decimals":8},{"type":"XPUBAddress","name":"tb1p29gpmd96hhgf7wj2vs03ca7x2xx39g8t6e0p55h2d5ssqs4fsj8qtx00wc","path":"m/86'/1'/0'/1/2","transfers":0,"decimals":8}]}`,
 			},
 		},
 		{
@@ -1044,7 +1068,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 			req: websocketReq{
 				Method: "getInfo",
 			},
-			want: `{"id":"0","data":{"name":"Fakecoin","shortcut":"FAKE","decimals":8,"version":"unknown","bestHeight":225494,"bestHash":"00000000eb0443fd7dc4a1ed5c686a8e995057805f9a161d9a5a77a95e72b7b6","block0Hash":"","testnet":true}}`,
+			want: `{"id":"0","data":{"name":"Fakecoin","shortcut":"FAKE","decimals":8,"version":"unknown","bestHeight":225494,"bestHash":"00000000eb0443fd7dc4a1ed5c686a8e995057805f9a161d9a5a77a95e72b7b6","block0Hash":"","testnet":true,"backend":{"version":"001001","subversion":"/Fakecoin:0.0.1/"}}}`,
 		},
 		{
 			name: "websocket getBlockHash",
@@ -1156,6 +1180,20 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 			want: `{"id":"10","data":[{"feePerTx":"246","feePerUnit":"199"},{"feePerTx":"616","feePerUnit":"499"},{"feePerTx":"1233","feePerUnit":"999"},{"feePerTx":"2467","feePerUnit":"1999"}]}`,
 		},
 		{
+			name: "websocket estimateFee second time, from cache",
+			req: websocketReq{
+				Method: "estimateFee",
+				Params: map[string]interface{}{
+					"blocks": []int{2, 5, 10, 20},
+					"specific": map[string]interface{}{
+						"conservative": false,
+						"txsize":       1234,
+					},
+				},
+			},
+			want: `{"id":"11","data":[{"feePerTx":"246","feePerUnit":"199"},{"feePerTx":"616","feePerUnit":"499"},{"feePerTx":"1233","feePerUnit":"999"},{"feePerTx":"2467","feePerUnit":"1999"}]}`,
+		},
+		{
 			name: "websocket sendTransaction",
 			req: websocketReq{
 				Method: "sendTransaction",
@@ -1163,21 +1201,21 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"hex": "123456",
 				},
 			},
-			want: `{"id":"11","data":{"result":"9876"}}`,
+			want: `{"id":"12","data":{"result":"9876"}}`,
 		},
 		{
 			name: "websocket subscribeNewBlock",
 			req: websocketReq{
 				Method: "subscribeNewBlock",
 			},
-			want: `{"id":"12","data":{"subscribed":true}}`,
+			want: `{"id":"13","data":{"subscribed":true}}`,
 		},
 		{
 			name: "websocket unsubscribeNewBlock",
 			req: websocketReq{
 				Method: "unsubscribeNewBlock",
 			},
-			want: `{"id":"13","data":{"subscribed":false}}`,
+			want: `{"id":"14","data":{"subscribed":false}}`,
 		},
 		{
 			name: "websocket subscribeAddresses",
@@ -1187,21 +1225,21 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"addresses": []string{dbtestdata.Addr1, dbtestdata.Addr2},
 				},
 			},
-			want: `{"id":"14","data":{"subscribed":true}}`,
+			want: `{"id":"15","data":{"subscribed":true}}`,
 		},
 		{
 			name: "websocket unsubscribeAddresses",
 			req: websocketReq{
 				Method: "unsubscribeAddresses",
 			},
-			want: `{"id":"15","data":{"subscribed":false}}`,
+			want: `{"id":"16","data":{"subscribed":false}}`,
 		},
 		{
 			name: "websocket ping",
 			req: websocketReq{
 				Method: "ping",
 			},
-			want: `{"id":"16","data":{}}`,
+			want: `{"id":"17","data":{}}`,
 		},
 		{
 			name: "websocket getCurrentFiatRates all currencies",
@@ -1211,7 +1249,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{},
 				},
 			},
-			want: `{"id":"17","data":{"ts":1574346615,"rates":{"eur":7134.1,"usd":7914.5}}}`,
+			want: `{"id":"18","data":{"ts":1574346615,"rates":{"eur":7134.1,"usd":7914.5}}}`,
 		},
 		{
 			name: "websocket getCurrentFiatRates usd",
@@ -1221,7 +1259,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{"usd"},
 				},
 			},
-			want: `{"id":"18","data":{"ts":1574346615,"rates":{"usd":7914.5}}}`,
+			want: `{"id":"19","data":{"ts":1574346615,"rates":{"usd":7914.5}}}`,
 		},
 		{
 			name: "websocket getCurrentFiatRates eur",
@@ -1231,7 +1269,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{"eur"},
 				},
 			},
-			want: `{"id":"19","data":{"ts":1574346615,"rates":{"eur":7134.1}}}`,
+			want: `{"id":"20","data":{"ts":1574346615,"rates":{"eur":7134.1}}}`,
 		},
 		{
 			name: "websocket getCurrentFiatRates incorrect currency",
@@ -1241,7 +1279,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{"does-not-exist"},
 				},
 			},
-			want: `{"id":"20","data":{"ts":1574346615,"rates":{"does-not-exist":-1}}}`,
+			want: `{"id":"21","data":{"ts":1574346615,"rates":{"does-not-exist":-1}}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps missing date",
@@ -1251,7 +1289,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{"usd"},
 				},
 			},
-			want: `{"id":"21","data":{"error":{"message":"No timestamps provided"}}}`,
+			want: `{"id":"22","data":{"error":{"message":"No timestamps provided"}}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps incorrect date",
@@ -1262,7 +1300,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamps": []string{"yesterday"},
 				},
 			},
-			want: `{"id":"22","data":{"error":{"message":"json: cannot unmarshal string into Go struct field .timestamps of type int64"}}}`,
+			want: `{"id":"23","data":{"error":{"message":"json: cannot unmarshal string into Go struct field .timestamps of type int64"}}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps empty currency",
@@ -1273,7 +1311,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{""},
 				},
 			},
-			want: `{"id":"23","data":{"tickers":[{"ts":7885693815,"rates":{}}]}}`,
+			want: `{"id":"24","data":{"tickers":[{"ts":7885693815,"rates":{}}]}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps incorrect (future) date",
@@ -1284,7 +1322,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamps": []int64{7885693815},
 				},
 			},
-			want: `{"id":"24","data":{"tickers":[{"ts":7885693815,"rates":{"usd":-1}}]}}`,
+			want: `{"id":"25","data":{"tickers":[{"ts":7885693815,"rates":{"usd":-1}}]}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps exact date",
@@ -1295,7 +1333,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamps": []int64{1574346615},
 				},
 			},
-			want: `{"id":"25","data":{"tickers":[{"ts":1574346615,"rates":{"usd":7914.5}}]}}`,
+			want: `{"id":"26","data":{"tickers":[{"ts":1574346615,"rates":{"usd":7914.5}}]}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps closest date, eur",
@@ -1306,7 +1344,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamps": []int64{1521507600},
 				},
 			},
-			want: `{"id":"26","data":{"tickers":[{"ts":1521511200,"rates":{"eur":1300}}]}}`,
+			want: `{"id":"27","data":{"tickers":[{"ts":1521511200,"rates":{"eur":1300}}]}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps multiple timestamps usd",
@@ -1317,7 +1355,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamps": []int64{1570346615, 1574346615},
 				},
 			},
-			want: `{"id":"27","data":{"tickers":[{"ts":1574344800,"rates":{"usd":7814.5}},{"ts":1574346615,"rates":{"usd":7914.5}}]}}`,
+			want: `{"id":"28","data":{"tickers":[{"ts":1574344800,"rates":{"usd":7814.5}},{"ts":1574346615,"rates":{"usd":7914.5}}]}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps multiple timestamps eur",
@@ -1328,7 +1366,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamps": []int64{1570346615, 1574346615},
 				},
 			},
-			want: `{"id":"28","data":{"tickers":[{"ts":1574344800,"rates":{"eur":7100}},{"ts":1574346615,"rates":{"eur":7134.1}}]}}`,
+			want: `{"id":"29","data":{"tickers":[{"ts":1574344800,"rates":{"eur":7100}},{"ts":1574346615,"rates":{"eur":7134.1}}]}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps multiple timestamps with an error",
@@ -1339,7 +1377,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamps": []int64{1570346615, 1574346615, 2000000000},
 				},
 			},
-			want: `{"id":"29","data":{"tickers":[{"ts":1574344800,"rates":{"usd":7814.5}},{"ts":1574346615,"rates":{"usd":7914.5}},{"ts":2000000000,"rates":{"usd":-1}}]}}`,
+			want: `{"id":"30","data":{"tickers":[{"ts":1574344800,"rates":{"usd":7814.5}},{"ts":1574346615,"rates":{"usd":7914.5}},{"ts":2000000000,"rates":{"usd":-1}}]}}`,
 		},
 		{
 			name: "websocket getFiatRatesForTimestamps multiple errors",
@@ -1350,7 +1388,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamps": []int64{7832854800, 2000000000},
 				},
 			},
-			want: `{"id":"30","data":{"tickers":[{"ts":7832854800,"rates":{"usd":-1}},{"ts":2000000000,"rates":{"usd":-1}}]}}`,
+			want: `{"id":"31","data":{"tickers":[{"ts":7832854800,"rates":{"usd":-1}},{"ts":2000000000,"rates":{"usd":-1}}]}}`,
 		},
 		{
 			name: "websocket getTickersList",
@@ -1360,7 +1398,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"timestamp": 1570346615,
 				},
 			},
-			want: `{"id":"31","data":{"ts":1574344800,"available_currencies":["eur","usd"]}}`,
+			want: `{"id":"32","data":{"ts":1574344800,"available_currencies":["eur","usd"]}}`,
 		},
 		{
 			name: "websocket getBalanceHistory Addr2",
@@ -1370,7 +1408,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"descriptor": "mtGXQvBowMkBpnhLckhxhbwYK44Gs9eEtz",
 				},
 			},
-			want: `{"id":"32","data":[{"time":1521514800,"txs":1,"received":"24690","sent":"0","sentToSelf":"0","rates":{"eur":1301,"usd":2001}},{"time":1521594000,"txs":1,"received":"0","sent":"12345","sentToSelf":"0","rates":{"eur":1303,"usd":2003}}]}`,
+			want: `{"id":"33","data":[{"time":1521514800,"txs":1,"received":"24690","sent":"0","sentToSelf":"0","rates":{"eur":1301,"usd":2001}},{"time":1521594000,"txs":1,"received":"0","sent":"12345","sentToSelf":"0","rates":{"eur":1303,"usd":2003}}]}`,
 		},
 		{
 			name: "websocket getBalanceHistory xpub",
@@ -1380,7 +1418,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"descriptor": dbtestdata.Xpub,
 				},
 			},
-			want: `{"id":"33","data":[{"time":1521514800,"txs":1,"received":"1","sent":"0","sentToSelf":"0","rates":{"eur":1301,"usd":2001}},{"time":1521594000,"txs":1,"received":"118641975500","sent":"1","sentToSelf":"118641975500","rates":{"eur":1303,"usd":2003}}]}`,
+			want: `{"id":"34","data":[{"time":1521514800,"txs":1,"received":"1","sent":"0","sentToSelf":"0","rates":{"eur":1301,"usd":2001}},{"time":1521594000,"txs":1,"received":"118641975500","sent":"1","sentToSelf":"118641975500","rates":{"eur":1303,"usd":2003}}]}`,
 		},
 		{
 			name: "websocket getBalanceHistory xpub from=1521504000&to=1521590400 currencies=[usd]",
@@ -1393,7 +1431,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{"usd"},
 				},
 			},
-			want: `{"id":"34","data":[{"time":1521514800,"txs":1,"received":"1","sent":"0","sentToSelf":"0","rates":{"usd":2001}}]}`,
+			want: `{"id":"35","data":[{"time":1521514800,"txs":1,"received":"1","sent":"0","sentToSelf":"0","rates":{"usd":2001}}]}`,
 		},
 		{
 			name: "websocket getBalanceHistory xpub from=1521504000&to=1521590400 currencies=[usd, eur, incorrect]",
@@ -1406,7 +1444,7 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{"usd", "eur", "incorrect"},
 				},
 			},
-			want: `{"id":"35","data":[{"time":1521514800,"txs":1,"received":"1","sent":"0","sentToSelf":"0","rates":{"eur":1301,"incorrect":-1,"usd":2001}}]}`,
+			want: `{"id":"36","data":[{"time":1521514800,"txs":1,"received":"1","sent":"0","sentToSelf":"0","rates":{"eur":1301,"incorrect":-1,"usd":2001}}]}`,
 		},
 		{
 			name: "websocket getBalanceHistory xpub from=1521504000&to=1521590400 currencies=[]",
@@ -1419,7 +1457,21 @@ func websocketTestsBitcoinType(t *testing.T, ts *httptest.Server) {
 					"currencies": []string{},
 				},
 			},
-			want: `{"id":"36","data":[{"time":1521514800,"txs":1,"received":"1","sent":"0","sentToSelf":"0","rates":{"eur":1301,"usd":2001}}]}`,
+			want: `{"id":"37","data":[{"time":1521514800,"txs":1,"received":"1","sent":"0","sentToSelf":"0","rates":{"eur":1301,"usd":2001}}]}`,
+		},
+		{
+			name: "websocket subscribeNewTransaction",
+			req: websocketReq{
+				Method: "subscribeNewTransaction",
+			},
+			want: `{"id":"38","data":{"subscribed":false,"message":"subscribeNewTransaction not enabled, use -enablesubnewtx flag to enable."}}`,
+		},
+		{
+			name: "websocket unsubscribeNewTransaction",
+			req: websocketReq{
+				Method: "unsubscribeNewTransaction",
+			},
+			want: `{"id":"39","data":{"subscribed":false,"message":"unsubscribeNewTransaction not enabled, use -enablesubnewtx flag to enable."}}`,
 		},
 	}
 

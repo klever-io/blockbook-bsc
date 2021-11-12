@@ -1,4 +1,4 @@
-package xzc
+package firo
 
 import (
 	"bytes"
@@ -14,10 +14,13 @@ import (
 )
 
 const (
-	OpZeroCoinMint  = 0xc1
-	OpZeroCoinSpend = 0xc2
-	OpSigmaMint     = 0xc3
-	OpSigmaSpend    = 0xc4
+	OpZeroCoinMint      = 0xc1
+	OpZeroCoinSpend     = 0xc2
+	OpSigmaMint         = 0xc3
+	OpSigmaSpend        = 0xc4
+	OpLelantusMint      = 0xc5
+	OpLelantusJMint     = 0xc6
+	OpLelantusJoinSplit = 0xc7
 
 	MainnetMagic wire.BitcoinNet = 0xe3d9fef1
 	TestnetMagic wire.BitcoinNet = 0xcffcbeea
@@ -25,6 +28,8 @@ const (
 
 	GenesisBlockTime       = 1414776286
 	SwitchToMTPBlockHeader = 1544443200
+	SwitchToProgPowBlockHeaderTestnet = 1630069200
+	SwitchToProgPowBlockHeaderMainnet = 1635228000
 	MTPL                   = 64
 
 	SpendTxID = "0000000000000000000000000000000000000000000000000000000000000000"
@@ -60,21 +65,21 @@ func init() {
 	RegtestParams.Net = RegtestMagic
 }
 
-// ZcoinParser handle
-type ZcoinParser struct {
-	*btc.BitcoinParser
+// FiroParser handle
+type FiroParser struct {
+	*btc.BitcoinLikeParser
 }
 
-// NewZcoinParser returns new ZcoinParser instance
-func NewZcoinParser(params *chaincfg.Params, c *btc.Configuration) *ZcoinParser {
-	return &ZcoinParser{
-		BitcoinParser: btc.NewBitcoinParser(params, c),
+// NewFiroParser returns new FiroParser instance
+func NewFiroParser(params *chaincfg.Params, c *btc.Configuration) *FiroParser {
+	return &FiroParser{
+		BitcoinLikeParser: btc.NewBitcoinLikeParser(params, c),
 	}
 }
 
-// GetChainParams contains network parameters for the main Zcoin network,
-// the regression test Zcoin network, the test Zcoin network and
-// the simulation test Zcoin network, in this order
+// GetChainParams contains network parameters for the main Firo network,
+// the regression test Firo network, the test Firo network and
+// the simulation test Firo network, in this order
 func GetChainParams(chain string) *chaincfg.Params {
 	if !chaincfg.IsRegistered(&MainNetParams) {
 		err := chaincfg.Register(&MainNetParams)
@@ -99,7 +104,7 @@ func GetChainParams(chain string) *chaincfg.Params {
 }
 
 // GetAddressesFromAddrDesc returns addresses for given address descriptor with flag if the addresses are searchable
-func (p *ZcoinParser) GetAddressesFromAddrDesc(addrDesc bchain.AddressDescriptor) ([]string, bool, error) {
+func (p *FiroParser) GetAddressesFromAddrDesc(addrDesc bchain.AddressDescriptor) ([]string, bool, error) {
 
 	if len(addrDesc) > 0 {
 		switch addrDesc[0] {
@@ -111,6 +116,12 @@ func (p *ZcoinParser) GetAddressesFromAddrDesc(addrDesc bchain.AddressDescriptor
 			return []string{"Sigmamint"}, false, nil
 		case OpSigmaSpend:
 			return []string{"Sigmaspend"}, false, nil
+		case OpLelantusMint:
+			return []string{"LelantusMint"}, false, nil
+		case OpLelantusJMint:
+			return []string{"LelantusJMint"}, false, nil
+		case OpLelantusJoinSplit:
+			return []string{"LelantusJoinSplit"}, false, nil
 		}
 	}
 
@@ -118,17 +129,17 @@ func (p *ZcoinParser) GetAddressesFromAddrDesc(addrDesc bchain.AddressDescriptor
 }
 
 // PackTx packs transaction to byte array using protobuf
-func (p *ZcoinParser) PackTx(tx *bchain.Tx, height uint32, blockTime int64) ([]byte, error) {
+func (p *FiroParser) PackTx(tx *bchain.Tx, height uint32, blockTime int64) ([]byte, error) {
 	return p.BaseParser.PackTx(tx, height, blockTime)
 }
 
 // UnpackTx unpacks transaction from protobuf byte array
-func (p *ZcoinParser) UnpackTx(buf []byte) (*bchain.Tx, uint32, error) {
+func (p *FiroParser) UnpackTx(buf []byte) (*bchain.Tx, uint32, error) {
 	return p.BaseParser.UnpackTx(buf)
 }
 
-// TxFromZcoinMsgTx converts bitcoin wire Tx to bchain.Tx
-func (p *ZcoinParser) TxFromZcoinMsgTx(t *ZcoinMsgTx, parseAddresses bool) bchain.Tx {
+// TxFromFiroMsgTx converts bitcoin wire Tx to bchain.Tx
+func (p *FiroParser) TxFromFiroMsgTx(t *FiroMsgTx, parseAddresses bool) bchain.Tx {
 	btx := p.TxFromMsgTx(&t.MsgTx, parseAddresses)
 
 	// NOTE: wire.MsgTx.TxHash() doesn't include extra
@@ -138,7 +149,7 @@ func (p *ZcoinParser) TxFromZcoinMsgTx(t *ZcoinMsgTx, parseAddresses bool) bchai
 }
 
 // ParseBlock parses raw block to our Block struct
-func (p *ZcoinParser) ParseBlock(b []byte) (*bchain.Block, error) {
+func (p *FiroParser) ParseBlock(b []byte) (*bchain.Block, error) {
 	reader := bytes.NewReader(b)
 
 	// parse standard block header first
@@ -147,38 +158,48 @@ func (p *ZcoinParser) ParseBlock(b []byte) (*bchain.Block, error) {
 		return nil, err
 	}
 
-	// then MTP header
-	if isMTP(header) {
-		mtpHeader := MTPBlockHeader{}
-		mtpHashData := MTPHashData{}
+	// then ProgPow or MTP header
+	if(isProgPow(header, p.Params.Net == TestnetMagic)){
+		progPowHeader := ProgPowBlockHeader{}
 
 		// header
-		err = binary.Read(reader, binary.LittleEndian, &mtpHeader)
+		err = binary.Read(reader, binary.LittleEndian, &progPowHeader)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		if isMTP(header) {
+			mtpHeader := MTPBlockHeader{}
+			mtpHashData := MTPHashData{}
 
-		// hash data
-		err = binary.Read(reader, binary.LittleEndian, &mtpHashData)
-		if err != nil {
-			return nil, err
-		}
-
-		// proof
-		for i := 0; i < MTPL*3; i++ {
-			var numberProofBlocks uint8
-
-			err = binary.Read(reader, binary.LittleEndian, &numberProofBlocks)
+			// header
+			err = binary.Read(reader, binary.LittleEndian, &mtpHeader)
 			if err != nil {
 				return nil, err
 			}
 
-			for j := uint8(0); j < numberProofBlocks; j++ {
-				var mtpData [16]uint8
+			// hash data
+			err = binary.Read(reader, binary.LittleEndian, &mtpHashData)
+			if err != nil {
+				return nil, err
+			}
 
-				err = binary.Read(reader, binary.LittleEndian, mtpData[:])
+			// proof
+			for i := 0; i < MTPL*3; i++ {
+				var numberProofBlocks uint8
+
+				err = binary.Read(reader, binary.LittleEndian, &numberProofBlocks)
 				if err != nil {
 					return nil, err
+				}
+
+				for j := uint8(0); j < numberProofBlocks; j++ {
+					var mtpData [16]uint8
+
+					err = binary.Read(reader, binary.LittleEndian, mtpData[:])
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
@@ -193,7 +214,7 @@ func (p *ZcoinParser) ParseBlock(b []byte) (*bchain.Block, error) {
 	txs := make([]bchain.Tx, ntx)
 
 	for i := uint64(0); i < ntx; i++ {
-		tx := ZcoinMsgTx{}
+		tx := FiroMsgTx{}
 
 		// read version and seek back
 		var version uint32 = 0
@@ -215,13 +236,13 @@ func (p *ZcoinParser) ParseBlock(b []byte) (*bchain.Block, error) {
 			enc = wire.BaseEncoding
 		}
 
-		if err = tx.XzcDecode(reader, 0, enc); err != nil {
+		if err = tx.FiroDecode(reader, 0, enc); err != nil {
 			return nil, err
 		}
 
-		btx := p.TxFromZcoinMsgTx(&tx, false)
+		btx := p.TxFromFiroMsgTx(&tx, false)
 
-		if err = p.parseZcoinTx(&btx); err != nil {
+		if err = p.parseFiroTx(&btx); err != nil {
 			return nil, err
 		}
 
@@ -238,7 +259,7 @@ func (p *ZcoinParser) ParseBlock(b []byte) (*bchain.Block, error) {
 }
 
 // ParseTxFromJson parses JSON message containing transaction and returns Tx struct
-func (p *ZcoinParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
+func (p *FiroParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
 	var tx bchain.Tx
 	err := json.Unmarshal(msg, &tx)
 	if err != nil {
@@ -255,12 +276,12 @@ func (p *ZcoinParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
 		vout.JsonValue = ""
 	}
 
-	p.parseZcoinTx(&tx)
+	p.parseFiroTx(&tx)
 
 	return &tx, nil
 }
 
-func (p *ZcoinParser) parseZcoinTx(tx *bchain.Tx) error {
+func (p *FiroParser) parseFiroTx(tx *bchain.Tx) error {
 	for i := range tx.Vin {
 		vin := &tx.Vin[i]
 
@@ -290,6 +311,13 @@ func isMTP(h *wire.BlockHeader) bool {
 	return epoch > GenesisBlockTime && epoch >= SwitchToMTPBlockHeader
 }
 
+func isProgPow(h *wire.BlockHeader, isTestNet bool) bool {
+	epoch := h.Timestamp.Unix()
+
+	// the genesis block never be MTP block
+	return isTestNet && epoch >= SwitchToProgPowBlockHeaderTestnet || !isTestNet && epoch >= SwitchToProgPowBlockHeaderMainnet
+}
+
 type MTPHashData struct {
 	HashRootMTP [16]uint8
 	BlockMTP    [128][128]uint64
@@ -300,4 +328,9 @@ type MTPBlockHeader struct {
 	MTPHashValue chainhash.Hash
 	Reserved1    chainhash.Hash
 	Reserved2    chainhash.Hash
+}
+
+type ProgPowBlockHeader struct {
+	Nonce64 int64
+	MixHash chainhash.Hash
 }
