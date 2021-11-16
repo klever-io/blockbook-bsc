@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/trezor/blockbook/bchain/coins/movr"
 	"io/ioutil"
 	"math/big"
 	"reflect"
@@ -65,6 +66,7 @@ func init() {
 	BlockChainFactories["Zcash"] = zec.NewZCashRPC
 	BlockChainFactories["Zcash Testnet"] = zec.NewZCashRPC
 	BlockChainFactories["BSC"] = bsc.NewEthereumRPC
+	BlockChainFactories["MOVR"] = movr.NewEthereumRPC
 	BlockChainFactories["BSC Testnet"] = bsc.NewEthereumRPC
 	BlockChainFactories["Ethereum"] = eth.NewEthereumRPC
 	BlockChainFactories["Ethereum Classic"] = eth.NewEthereumRPC
@@ -322,7 +324,7 @@ func (c *blockChainWithMetrics) EthereumTypeGetReceipt(txid string) (receipt *bc
 	return c.b.EthereumTypeGetReceipt(txid)
 }
 
-func (c *blockChainWithMetrics) BscTypeGetTokenHub()(th *bchain.Tokenhub, err error) {
+func (c *blockChainWithMetrics) BscTypeGetTokenHub() (th *bchain.Tokenhub, err error) {
 	defer func(s time.Time) { c.observeRPCLatency("BscTypeGetTokenHub", s, err) }(time.Now())
 	return c.b.BscTypeGetTokenHub()
 }
