@@ -22,7 +22,7 @@ COPY --chown=klever:klever server/testcert.* /blockbook/cert/
 COPY --chown=klever:klever static/ /blockbook/
 
 # copies binary
-COPY --chown=klever:klever blockbook /usr/local/bin/
+COPY --chown=klever:klever build/blockbook /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/blockbook
 

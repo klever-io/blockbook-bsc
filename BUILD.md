@@ -7,5 +7,5 @@ to strightforward build the binary and the runtime container:
 $ make build
 
 # this will build the runtime container
-$ docker build -t blockbook-bsc -f Dockerfile ./build
+$ docker build -t blockbook-bsc ./
 ```
