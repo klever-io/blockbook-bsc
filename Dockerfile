@@ -15,6 +15,13 @@ USER klever
 
 WORKDIR /blockbook
 
+# copies self-signed certs
+COPY --chown=klever:klever server/testcert.* /blockbook/cert/
+
+# copies static folder
+COPY --chown=klever:klever static/ /blockbook/
+
+# copies binary
 COPY --chown=klever:klever blockbook /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/blockbook
