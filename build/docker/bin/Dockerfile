@@ -9,7 +9,7 @@ RUN apt-get update && \
                        liblz4-dev graphviz && \
     apt-get clean
 
-ENV GOLANG_VERSION=go1.14.2.linux-amd64
+ENV GOLANG_VERSION=go1.16.10.linux-amd64
 ENV ROCKSDB_VERSION=v5.18.3
 ENV GOPATH=/go
 ENV PATH=$PATH:$GOPATH/bin
@@ -23,8 +23,8 @@ RUN cd /opt && wget https://dl.google.com/go/$GOLANG_VERSION.tar.gz && \
     tar xf $GOLANG_VERSION.tar.gz
 RUN ln -s /opt/go/bin/go /usr/bin/go
 RUN mkdir -p $GOPATH
-RUN echo -n "GO version: " && go version
-RUN echo -n "GOPATH: " && echo $GOPATH
+RUN echo -n "GO version: " && go version \
+    && echo -n "GOPATH: " && echo $GOPATH
 
 # install rocksdb
 RUN cd /opt && git clone -b $ROCKSDB_VERSION --depth 1 https://github.com/facebook/rocksdb.git
