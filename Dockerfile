@@ -19,7 +19,7 @@ WORKDIR /blockbook
 COPY --chown=klever:klever server/testcert.* /blockbook/cert/
 
 # copies static folder
-COPY --chown=klever:klever static/ /blockbook/
+COPY --chown=klever:klever static/ /blockbook/static
 
 # copies binary
 COPY --chown=klever:klever build/blockbook /usr/local/bin/
