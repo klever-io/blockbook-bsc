@@ -934,7 +934,9 @@ func (w *Worker) GetAddress(address string, page int, txsOnPage int, option Acco
 			} else {
 				tx, err := w.txFromTxid(txid, bestheight, option, nil)
 				if err != nil {
-					return nil, err
+					// return nil, err
+					// do not throw error or add TX if cant fetch info from node or cache
+					continue
 				}
 				txs = append(txs, tx)
 			}
