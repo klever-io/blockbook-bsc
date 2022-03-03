@@ -24,6 +24,9 @@ const upgradeFailed = "Upgrade failed: "
 const outChannelSize = 500
 const defaultTimeout = 60 * time.Second
 
+// readLimit constant to define websocket limit, in bytes
+const readLimit = 20971520
+
 // allRates is a special "currency" parameter that means all available currencies
 const allFiatRates = "!ALL!"
 
@@ -124,6 +127,8 @@ func (s *WebsocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, upgradeFailed+err.Error(), 503)
 		return
 	}
+	conn.SetReadLimit(readLimit)
+
 	c := &websocketChannel{
 		id:            atomic.AddUint64(&connectionCounter, 1),
 		conn:          conn,
