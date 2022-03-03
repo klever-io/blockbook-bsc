@@ -16,7 +16,6 @@ require (
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
-	github.com/gobuffalo/packr v1.13.7
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.4.3
@@ -41,4 +40,4 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 )
 
-replace github.com/ethereum/go-ethereum => github.com/binance-chain/bsc v0.0.0-20210526215719-8f3389ad7e61
+replace github.com/ethereum/go-ethereum => github.com/klever-io/bsc v1.1.0-beta.0.20220303204934-ef7a08959ef4
