@@ -40,4 +40,4 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 )
 
-replace github.com/ethereum/go-ethereum => github.com/klever-io/bsc v1.1.0-beta.0.20220303204934-ef7a08959ef4
+replace github.com/ethereum/go-ethereum => github.com/klever-io/bsc v0.0.0-20220303211918-54fd9cbd329f
